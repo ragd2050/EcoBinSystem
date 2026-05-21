@@ -1,0 +1,1175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EcoBin v3 — Smart Recycling System</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@600;700&display=swap');
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --g1:#1A3C34;--g2:#2D6A4F;--g3:#40916C;--g4:#52B788;--g5:#95D5B2;--g6:#D8F3DC;
+  --b2:#1565C0;--b3:#1976D2;--b4:#42A5F5;--b6:#DBEAFE;
+  --bg:#EEF2EE;--surf:#fff;--surf2:#F5F7F5;
+  --tx:#0F1F0F;--tx2:#3D5C45;--tx3:#6B8F72;
+  --bdr:#D4E4D6;--bdr2:#C2D8C5;
+  --red:#B71C1C;--redbg:#FFEBEE;--amb:#BF360C;--ambbg:#FBE9E7;
+  --r:10px;--rlg:14px;--rxl:18px;
+  --tr:0.2s cubic-bezier(0.4,0,0.2,1);
+}
+[data-theme="dark"]{
+  --bg:#0F1A0F;--surf:#1A2B1A;--surf2:#223322;
+  --tx:#E8F5E8;--tx2:#A8C8A8;--tx3:#6B8F72;
+  --bdr:#2D4A2D;--bdr2:#3D5C3D;
+  --g1:#0D2218;--g2:#1A3C2A;--g3:#2D6A4F;--g4:#40916C;
+  --redbg:#2D0A0A;--ambbg:#2D1A0A;--b6:#0D1F3C;
+}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--tx);font-size:14px;line-height:1.5;transition:background var(--tr),color var(--tr);height:100vh;overflow:hidden}
+
+/* ── LAYOUT ── */
+.app{display:flex;height:100vh;overflow:hidden}
+
+/* ── SIDEBAR ── */
+.sidebar{width:228px;flex-shrink:0;background:var(--g1);display:flex;flex-direction:column;position:relative;overflow:hidden;transition:width var(--tr)}
+.sidebar.collapsed{width:60px}
+.sidebar::after{content:'';position:absolute;bottom:-80px;right:-80px;width:200px;height:200px;border-radius:50%;background:rgba(255,255,255,0.03);pointer-events:none}
+.sidebar-logo{padding:18px 14px 16px;border-bottom:1px solid rgba(255,255,255,0.08);display:flex;align-items:center;gap:10px;overflow:hidden;min-height:66px}
+.logo-mark{width:32px;height:32px;border-radius:9px;background:linear-gradient(135deg,#52B788,#2D6A4F);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.logo-texts{overflow:hidden;white-space:nowrap;transition:opacity var(--tr)}
+.sidebar.collapsed .logo-texts{opacity:0}
+.logo-name{font-family:'Space Grotesk',sans-serif;font-size:15px;font-weight:700;color:#fff}
+.logo-tag{font-size:9px;color:rgba(255,255,255,0.4);text-transform:uppercase;letter-spacing:1px}
+.sidebar-nav{flex:1;padding:12px 8px;overflow-y:auto;overflow-x:hidden}
+.nav-section{font-size:9px;text-transform:uppercase;letter-spacing:1.2px;color:rgba(255,255,255,0.3);padding:10px 8px 4px;font-weight:600;white-space:nowrap;transition:opacity var(--tr)}
+.sidebar.collapsed .nav-section{opacity:0}
+.nav-item{display:flex;align-items:center;gap:9px;padding:9px 10px;border-radius:9px;cursor:pointer;color:rgba(255,255,255,0.55);font-size:13px;font-weight:400;transition:all 0.15s;margin-bottom:1px;border:none;background:none;width:100%;text-align:left;position:relative;overflow:hidden;white-space:nowrap}
+.nav-item:hover{background:rgba(255,255,255,0.09);color:rgba(255,255,255,0.9)}
+.nav-item.active{background:rgba(255,255,255,0.13);color:#fff;font-weight:500}
+.nav-item.active::before{content:'';position:absolute;left:0;top:50%;transform:translateY(-50%);width:3px;height:18px;background:var(--g4);border-radius:0 2px 2px 0}
+.nav-item svg{flex-shrink:0;width:16px;height:16px;opacity:0.75}
+.nav-item.active svg{opacity:1}
+.nav-label{transition:opacity var(--tr);overflow:hidden}
+.sidebar.collapsed .nav-label{opacity:0;width:0}
+.nav-badge{margin-left:auto;background:var(--red);color:#fff;font-size:10px;border-radius:20px;padding:1px 6px;font-weight:600;flex-shrink:0;transition:opacity var(--tr)}
+.sidebar.collapsed .nav-badge{opacity:0}
+.sidebar-footer{padding:10px 8px 14px;border-top:1px solid rgba(255,255,255,0.08)}
+.collapse-btn{width:100%;background:none;border:none;color:rgba(255,255,255,0.4);padding:7px;cursor:pointer;display:flex;align-items:center;justify-content:center;border-radius:8px;transition:all 0.15s;margin-bottom:6px}
+.collapse-btn:hover{background:rgba(255,255,255,0.08);color:rgba(255,255,255,0.8)}
+.collapse-btn svg{transition:transform var(--tr)}
+.sidebar.collapsed .collapse-btn svg{transform:rotate(180deg)}
+.eco-score{background:rgba(255,255,255,0.07);border-radius:9px;padding:10px 12px;transition:opacity var(--tr)}
+.sidebar.collapsed .eco-score{opacity:0;pointer-events:none}
+.eco-lbl{font-size:10px;color:rgba(255,255,255,0.4);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:6px}
+.eco-bar-bg{height:4px;background:rgba(255,255,255,0.1);border-radius:2px;margin-bottom:5px}
+.eco-bar-fill{height:4px;background:linear-gradient(90deg,#95D5B2,#52B788);border-radius:2px;width:68%;transition:width 0.6s}
+.eco-val{font-size:11px;color:#95D5B2;font-weight:500}
+
+/* ── MAIN ── */
+.main{flex:1;overflow:hidden;display:flex;flex-direction:column;min-width:0}
+.topbar{background:var(--surf);border-bottom:1px solid var(--bdr);padding:0 20px;height:52px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;gap:12px}
+.topbar-left{display:flex;align-items:center;gap:8px;min-width:0;overflow:hidden}
+.topbar-title{font-family:'Space Grotesk',sans-serif;font-size:14px;font-weight:700;color:var(--tx);white-space:nowrap}
+.topbar-div{width:1px;height:14px;background:var(--bdr2);flex-shrink:0}
+.topbar-sub{font-size:12px;color:var(--tx3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.topbar-right{display:flex;align-items:center;gap:8px;flex-shrink:0}
+.api-pill{font-size:11px;font-weight:500;padding:3px 9px;border-radius:20px;display:flex;align-items:center;gap:5px;white-space:nowrap}
+.api-pill.ok{background:#E8F5E9;color:#1B5E20}
+.api-pill.err{background:var(--redbg);color:var(--red)}
+.api-pill.wait{background:#FFF8E1;color:#E65100}
+.api-dot{width:5px;height:5px;border-radius:50%}
+.api-dot.ok{background:#43A047;animation:blink 2s infinite}
+.api-dot.wait{background:#FFA000}
+.api-dot.err{background:var(--red)}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0.35}}
+.theme-btn{background:none;border:1px solid var(--bdr2);border-radius:8px;padding:5px 8px;cursor:pointer;color:var(--tx2);display:flex;align-items:center;justify-content:center;transition:all 0.15s}
+.theme-btn:hover{background:var(--surf2)}
+.clk{font-size:12px;color:var(--tx3);font-variant-numeric:tabular-nums}
+.content{flex:1;overflow-y:auto;padding:18px 20px 30px}
+.page{display:none}.page.active{display:block;animation:fadeIn 0.2s ease}
+@keyframes fadeIn{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}
+
+/* ── KPI ── */
+.kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px}
+.kpi-card{background:var(--surf);border-radius:var(--rlg);padding:14px 16px;border:1px solid var(--bdr);position:relative;overflow:hidden;transition:transform 0.15s,box-shadow 0.15s}
+.kpi-card:hover{transform:translateY(-1px);box-shadow:0 4px 16px rgba(0,0,0,0.10)}
+.kpi-accent{position:absolute;top:0;left:0;width:3px;height:100%}
+.kpi-accent.g{background:linear-gradient(180deg,#52B788,#2D6A4F)}
+.kpi-accent.b{background:linear-gradient(180deg,#42A5F5,#1565C0)}
+.kpi-accent.r{background:linear-gradient(180deg,#EF9A9A,#B71C1C)}
+.kpi-hdr{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:10px;padding-left:5px}
+.kpi-box{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;flex-shrink:0}
+.kpi-box.g{background:var(--g6);color:var(--g2)}
+.kpi-box.b{background:var(--b6);color:var(--b2)}
+.kpi-box.r{background:var(--redbg);color:var(--red)}
+.kpi-box.a{background:var(--ambbg);color:var(--amb)}
+.kpi-badge{font-size:10px;font-weight:500;padding:2px 6px;border-radius:20px}
+.kpi-badge.up{background:#E8F5E9;color:#1B5E20}
+.kpi-badge.dn{background:var(--redbg);color:var(--red)}
+.kpi-badge.nt{background:var(--surf2);color:var(--tx3)}
+.kpi-val{font-family:'Space Grotesk',sans-serif;font-size:22px;font-weight:700;color:var(--tx);line-height:1;margin-bottom:3px;padding-left:5px}
+.kpi-lbl{font-size:11px;color:var(--tx3);padding-left:5px}
+
+/* ── SECTION ── */
+.sec-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.sec-title{font-family:'Space Grotesk',sans-serif;font-size:13px;font-weight:600;color:var(--tx);display:flex;align-items:center;gap:6px}
+.sec-title::before{content:'';width:3px;height:13px;background:var(--g3);border-radius:2px;flex-shrink:0}
+
+/* ── CHARTS ── */
+.charts-row{display:grid;grid-template-columns:1fr 1.55fr;gap:10px;margin-bottom:16px}
+.chart-card{background:var(--surf);border-radius:var(--rlg);padding:16px;border:1px solid var(--bdr)}
+.leg-row{display:flex;gap:12px;font-size:11px;color:var(--tx3);flex-wrap:wrap}
+.leg-item{display:flex;align-items:center;gap:4px}
+.leg-sq{width:8px;height:8px;border-radius:2px;flex-shrink:0}
+.donut-wrap{display:flex;align-items:center;gap:16px}
+.donut-stats{display:flex;flex-direction:column;gap:8px}
+.ds-row{display:flex;flex-direction:column}
+.ds-val{font-family:'Space Grotesk',sans-serif;font-size:17px;font-weight:700}
+.ds-lbl{font-size:10px;color:var(--tx3);text-transform:uppercase;letter-spacing:0.5px}
+
+/* ── TABLE ── */
+.tbl-card{background:var(--surf);border-radius:var(--rlg);border:1px solid var(--bdr);overflow:hidden;margin-bottom:16px}
+.tbl-hdr{padding:12px 16px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--bdr)}
+.tbl-title{font-family:'Space Grotesk',sans-serif;font-size:13px;font-weight:600;color:var(--tx)}
+table{width:100%;border-collapse:collapse}
+th{background:var(--surf2);padding:8px 14px;text-align:left;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.6px;color:var(--tx3);border-bottom:1px solid var(--bdr);white-space:nowrap}
+td{padding:10px 14px;font-size:13px;border-bottom:1px solid var(--bdr);color:var(--tx);vertical-align:middle}
+tr:last-child td{border-bottom:none}
+tbody tr{transition:background 0.1s}
+tbody tr:hover td{background:var(--surf2)}
+
+/* ── BADGES ── */
+.bdg{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:600;white-space:nowrap}
+.bdg::before{content:'';width:5px;height:5px;border-radius:50%;flex-shrink:0}
+.bdg.wet{background:var(--g6);color:#1A3C34}.bdg.wet::before{background:var(--g3)}
+.bdg.dry{background:var(--b6);color:#0D2137}.bdg.dry::before{background:var(--b3)}
+.bdg.full{background:var(--redbg);color:var(--red)}.bdg.full::before{background:var(--red)}
+.bdg.medium{background:var(--ambbg);color:var(--amb)}.bdg.medium::before{background:var(--amb)}
+.bdg.low{background:#E8F5E9;color:#1B5E20}.bdg.low::before{background:#388E3C}
+
+/* ── FILL BAR ── */
+.fw{display:flex;align-items:center;gap:7px}
+.fbar{width:65px;height:5px;background:var(--bdr);border-radius:3px;overflow:hidden;flex-shrink:0}
+.fin{height:100%;border-radius:3px;transition:width 0.5s}
+.fin.hi{background:var(--red)}.fin.md{background:var(--amb)}.fin.lo{background:var(--g3)}
+.fpct{font-size:12px;font-weight:500;min-width:28px;color:var(--tx2)}
+
+/* ── BUTTONS ── */
+.btn{display:inline-flex;align-items:center;gap:5px;padding:6px 13px;border-radius:8px;font-size:12px;font-weight:500;cursor:pointer;border:1px solid transparent;transition:all 0.15s;font-family:'Inter',sans-serif}
+.btn-p{background:var(--g2);color:#fff;border-color:var(--g2)}.btn-p:hover{background:var(--g1)}
+.btn-o{background:var(--surf);color:var(--tx);border-color:var(--bdr2)}.btn-o:hover{background:var(--surf2)}
+.btn-d{background:var(--redbg);color:var(--red);border-color:#FFCDD2}.btn-d:hover{background:#FFCDD2}
+.btn-sm{padding:4px 10px;font-size:11px;border-radius:7px}
+
+/* ── FORMS ── */
+.fg{margin-bottom:12px}
+.fl{display:block;font-size:12px;font-weight:500;color:var(--tx2);margin-bottom:4px}
+.fc{width:100%;padding:8px 11px;border:1px solid var(--bdr2);border-radius:8px;font-size:13px;color:var(--tx);font-family:'Inter',sans-serif;background:var(--surf);outline:none;transition:all 0.15s}
+.fc:focus{border-color:var(--g4);box-shadow:0 0 0 3px rgba(82,183,136,0.15)}
+select.fc{cursor:pointer}
+.fgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+
+/* ── MODAL ── */
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:200;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(3px)}
+.modal{background:var(--surf);border-radius:var(--rxl);width:460px;max-width:92vw;border:1px solid var(--bdr);animation:slideUp 0.22s cubic-bezier(0.34,1.56,0.64,1)}
+@keyframes slideUp{from{transform:translateY(24px);opacity:0}to{transform:translateY(0);opacity:1}}
+.modal-hdr{padding:16px 20px;border-bottom:1px solid var(--bdr);display:flex;align-items:center;justify-content:space-between}
+.modal-t{font-family:'Space Grotesk',sans-serif;font-size:14px;font-weight:700;color:var(--tx)}
+.modal-x{background:none;border:none;font-size:16px;cursor:pointer;color:var(--tx3);width:26px;height:26px;border-radius:6px;display:flex;align-items:center;justify-content:center}
+.modal-x:hover{background:var(--surf2)}
+.modal-body{padding:20px}
+.modal-foot{padding:12px 20px;border-top:1px solid var(--bdr);display:flex;justify-content:flex-end;gap:7px}
+
+/* ── PAGE HDR ── */
+.phdr{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:16px}
+.phdr-text h2{font-family:'Space Grotesk',sans-serif;font-size:16px;font-weight:700;color:var(--tx)}
+.phdr-text p{font-size:12px;color:var(--tx3);margin-top:2px}
+
+/* ── RECYCLING ── */
+.rec-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px}
+.rec-hero{border-radius:var(--rxl);padding:22px;position:relative;overflow:hidden}
+.rec-hero.wet{background:var(--g1)}.rec-hero.dry{background:#0D2137}
+.rec-bg{position:absolute;right:-40px;bottom:-40px;width:140px;height:140px;border-radius:50%;opacity:0.06}
+.rec-hero.wet .rec-bg{background:#52B788}.rec-hero.dry .rec-bg{background:#42A5F5}
+.rec-pill{display:inline-flex;align-items:center;gap:5px;background:rgba(255,255,255,0.1);color:rgba(255,255,255,0.8);padding:3px 10px;border-radius:20px;font-size:11px;font-weight:500;margin-bottom:12px}
+.rec-pill-dot{width:5px;height:5px;border-radius:50%;background:currentColor}
+.rec-hero h3{font-family:'Space Grotesk',sans-serif;font-size:16px;font-weight:700;color:#fff;margin-bottom:3px}
+.rec-hero p{font-size:12px;color:rgba(255,255,255,0.5);margin-bottom:14px}
+.chips{display:flex;flex-wrap:wrap;gap:5px}
+.chip{background:rgba(255,255,255,0.09);color:rgba(255,255,255,0.88);padding:4px 11px;border-radius:20px;font-size:11px;font-weight:500;border:1px solid rgba(255,255,255,0.13)}
+.ben-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px}
+.ben-card{background:var(--surf);border-radius:var(--rlg);padding:14px 16px;border:1px solid var(--bdr);text-align:center}
+.ben-icon{width:38px;height:38px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;letter-spacing:0.4px;margin:0 auto 9px}
+.ben-val{font-family:'Space Grotesk',sans-serif;font-size:18px;font-weight:700;color:var(--tx);margin-bottom:2px}
+.ben-lbl{font-size:11px;color:var(--tx3)}
+
+/* ── ALERTS ── */
+.alert-item{background:var(--surf);border-radius:var(--rlg);padding:13px 15px;margin-bottom:7px;border:1px solid var(--bdr);display:flex;align-items:center;gap:12px;transition:box-shadow 0.15s;animation:fadeIn 0.2s}
+.alert-item:hover{box-shadow:0 2px 12px rgba(0,0,0,0.08)}
+.alert-item.ci{border-left:3px solid var(--red)}.alert-item.wi{border-left:3px solid var(--amb)}
+.adot{width:9px;height:9px;border-radius:50%;flex-shrink:0}
+.adot.crit{background:var(--red)}.adot.warn{background:var(--amb)}
+.ac{flex:1}
+.at{font-weight:500;font-size:13px;color:var(--tx);margin-bottom:2px}
+.am{font-size:11px;color:var(--tx3)}
+.res-btn{background:var(--g6);color:var(--g2);border:none;padding:4px 11px;border-radius:7px;font-size:11px;font-weight:500;cursor:pointer;transition:all 0.15s;font-family:'Inter',sans-serif}
+.res-btn:hover{background:var(--g4);color:#fff}
+.res-tag{background:#E8F5E9;color:#1B5E20;border:1px solid #C8E6C9;padding:3px 9px;border-radius:7px;font-size:11px;font-weight:500}
+
+/* ── REPORTS ── */
+.rep-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px}
+.rep-card{background:var(--surf);border-radius:var(--rlg);padding:14px 16px;border:1px solid var(--bdr)}
+
+/* ── BINS SUMMARY ── */
+.bst-row{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px}
+.bst-card{background:var(--surf);border-radius:var(--r);padding:11px 13px;border:1px solid var(--bdr);display:flex;align-items:center;gap:9px}
+.bst-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0}
+.bst-v{font-family:'Space Grotesk',sans-serif;font-size:16px;font-weight:700;color:var(--tx)}
+.bst-l{font-size:10px;color:var(--tx3)}
+.acell{display:flex;gap:5px;align-items:center}
+
+/* ── MAP ── */
+.map-container{background:var(--surf);border-radius:var(--rlg);border:1px solid var(--bdr);padding:16px;margin-bottom:16px}
+.bin-map{position:relative;width:100%;height:280px;background:linear-gradient(135deg,#e2f0e2 0%,#cce0cc 100%);border-radius:10px;overflow:hidden;border:1px solid var(--bdr)}
+[data-theme="dark"] .bin-map{background:linear-gradient(135deg,#1a2e1a 0%,#122412 100%)}
+.map-road-h{position:absolute;background:rgba(255,255,255,0.55);height:7px;left:0;right:0;border-radius:2px}
+.map-road-v{position:absolute;background:rgba(255,255,255,0.55);width:7px;top:0;bottom:0;border-radius:2px}
+[data-theme="dark"] .map-road-h,[data-theme="dark"] .map-road-v{background:rgba(255,255,255,0.12)}
+.bin-pin{position:absolute;transform:translate(-50%,-100%);cursor:pointer;transition:transform 0.15s}
+.bin-pin:hover{transform:translate(-50%,-100%) scale(1.18)}
+.pin-body{width:26px;height:26px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(0,0,0,0.25)}
+.pin-inner{width:11px;height:11px;background:#fff;border-radius:50%;transform:rotate(45deg)}
+.pin-shadow{position:absolute;bottom:-4px;left:50%;transform:translateX(-50%);width:14px;height:4px;background:rgba(0,0,0,0.15);border-radius:50%;filter:blur(2px)}
+.pin-tooltip{position:absolute;top:-34px;left:50%;transform:translateX(-50%);background:var(--tx);color:var(--surf);font-size:10px;font-weight:600;padding:3px 8px;border-radius:6px;white-space:nowrap;opacity:0;transition:opacity 0.15s;pointer-events:none}
+.bin-pin:hover .pin-tooltip{opacity:1}
+
+/* ── SCHEDULE ── */
+.sched-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px}
+.sched-card{background:var(--surf);border-radius:var(--rlg);border:1px solid var(--bdr);overflow:hidden}
+.sched-day-hdr{background:var(--surf2);padding:10px 14px;border-bottom:1px solid var(--bdr)}
+.sched-day-name{font-family:'Space Grotesk',sans-serif;font-size:13px;font-weight:700;color:var(--tx)}
+.sched-day-date{font-size:11px;color:var(--tx3)}
+.sched-items{padding:8px}
+.sched-item{display:flex;align-items:center;gap:8px;padding:7px 8px;border-radius:7px;margin-bottom:3px;transition:background 0.1s}
+.sched-item:hover{background:var(--surf2)}
+.sched-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.si-title{font-size:12px;font-weight:500;color:var(--tx)}
+.si-sub{font-size:10px;color:var(--tx3)}
+.sched-status{margin-left:auto;font-size:10px;font-weight:600;padding:2px 7px;border-radius:20px;white-space:nowrap}
+.ss-done{background:#E8F5E9;color:#1B5E20}
+.ss-pend{background:var(--ambbg);color:var(--amb)}
+.ss-sched{background:var(--b6);color:var(--b2)}
+
+/* ── SEARCH ── */
+.sw{position:relative}
+.sw svg{position:absolute;left:8px;top:50%;transform:translateY(-50%);opacity:0.4;pointer-events:none}
+.sinput{padding:6px 10px 6px 28px;font-size:12px}
+
+/* ── TOAST ── */
+.toast{position:fixed;bottom:20px;right:20px;background:var(--tx);color:var(--surf);padding:9px 16px;border-radius:10px;font-size:13px;z-index:999;transform:translateY(120px);opacity:0;transition:all 0.3s cubic-bezier(0.34,1.56,0.64,1);pointer-events:none;display:flex;align-items:center;gap:8px;box-shadow:0 4px 20px rgba(0,0,0,0.2)}
+.toast.show{transform:translateY(0);opacity:1}
+.toast.ok{background:var(--g2)}.toast.err{background:var(--red)}
+
+::-webkit-scrollbar{width:4px;height:4px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--bdr2);border-radius:2px}
+
+@media(max-width:960px){
+  .kpi-grid{grid-template-columns:repeat(2,1fr)}
+  .charts-row,.rec-grid,.rep-grid,.sched-grid{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+
+<div id="toast" class="toast">
+  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+  <span id="tmsg"></span>
+</div>
+
+<div class="app">
+
+  <!-- ════════════════════ SIDEBAR ════════════════════ -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-mark">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"></polyline><polyline points="23 20 23 14 17 14"></polyline><path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 0 1 3.51 15"></path></svg>
+      </div>
+      <div class="logo-texts">
+        <div class="logo-name">EcoBin</div>
+        <div class="logo-tag">Smart Recycling</div>
+      </div>
+    </div>
+
+    <nav class="sidebar-nav">
+      <div class="nav-section">Main</div>
+      <button class="nav-item active" onclick="goPage('dashboard')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+        <span class="nav-label">Dashboard</span>
+      </button>
+      <button class="nav-item" onclick="goPage('bins')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6l-1 14H6L5 6"></path><path d="M10 11v6M14 11v6M9 6V4h6v2"></path></svg>
+        <span class="nav-label">Bins Management</span>
+      </button>
+      <button class="nav-item" onclick="goPage('map')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"></polygon><line x1="8" y1="2" x2="8" y2="18"></line><line x1="16" y1="6" x2="16" y2="22"></line></svg>
+        <span class="nav-label">Bin Map</span>
+      </button>
+      <button class="nav-item" onclick="goPage('disposal')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg>
+        <span class="nav-label">Disposal Records</span>
+      </button>
+      <div class="nav-section">Insights</div>
+      <button class="nav-item" onclick="goPage('recycling')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"></polyline><polyline points="23 20 23 14 17 14"></polyline><path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 0 1 3.51 15"></path></svg>
+        <span class="nav-label">Recycling</span>
+      </button>
+      <button class="nav-item" onclick="goPage('alerts')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
+        <span class="nav-label">Alerts</span>
+        <span class="nav-badge" id="abadge">3</span>
+      </button>
+      <button class="nav-item" onclick="goPage('schedule')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+        <span class="nav-label">Schedule</span>
+      </button>
+      <button class="nav-item" onclick="goPage('reports')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>
+        <span class="nav-label">Reports</span>
+      </button>
+    </nav>
+
+    <div class="sidebar-footer">
+      <button class="collapse-btn" onclick="toggleSidebar()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+      </button>
+      <div class="eco-score">
+        <div class="eco-lbl">Eco Score</div>
+        <div class="eco-bar-bg"><div class="eco-bar-fill" id="eco-fill"></div></div>
+        <div class="eco-val" id="eco-val">68% recycling rate</div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ════════════════════ MAIN ════════════════════ -->
+  <div class="main">
+    <div class="topbar">
+      <div class="topbar-left">
+        <div class="topbar-title" id="t-title">Dashboard</div>
+        <div class="topbar-div"></div>
+        <div class="topbar-sub" id="t-sub">Overview of all bins and recycling activity</div>
+      </div>
+      <div class="topbar-right">
+        <div class="api-pill wait" id="api-pill">
+          <div class="api-dot wait" id="api-dot"></div>
+          <span id="api-txt">Connecting...</span>
+        </div>
+        <button class="theme-btn" onclick="toggleTheme()" title="Toggle dark mode">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
+        </button>
+        <div class="clk" id="clk"></div>
+      </div>
+    </div>
+
+    <div class="content">
+
+      <!-- DASHBOARD -->
+      <div class="page active" id="page-dashboard">
+        <div class="kpi-grid" id="kpi-grid"></div>
+        <div class="charts-row">
+          <div class="chart-card">
+            <div class="sec-hdr"><div class="sec-title">Waste Split</div></div>
+            <div class="donut-wrap">
+              <div style="position:relative;width:150px;height:150px;flex-shrink:0">
+                <canvas id="pieChart" role="img" aria-label="Donut chart showing wet vs dry waste percentage">Wet vs Dry waste split</canvas>
+              </div>
+              <div class="donut-stats" id="donut-stats"></div>
+            </div>
+            <div class="leg-row" style="margin-top:12px" id="pie-leg"></div>
+          </div>
+          <div class="chart-card">
+            <div class="sec-hdr">
+              <div class="sec-title">Weekly Collection (kg)</div>
+              <div class="leg-row">
+                <div class="leg-item"><div class="leg-sq" style="background:#40916C"></div><span>Wet</span></div>
+                <div class="leg-item"><div class="leg-sq" style="background:#1976D2"></div><span>Dry</span></div>
+              </div>
+            </div>
+            <div style="position:relative;width:100%;height:190px">
+              <canvas id="barChart" role="img" aria-label="Grouped bar chart of weekly waste collection in kilograms">Weekly collection</canvas>
+            </div>
+          </div>
+        </div>
+        <div class="tbl-card">
+          <div class="tbl-hdr">
+            <div class="tbl-title">All Bins — Live Status</div>
+            <button class="btn btn-o btn-sm" onclick="initData()">
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="1 4 1 10 7 10"></polyline><path d="M3.51 15a9 9 0 1 0 .49-3.51"></path></svg>
+              Refresh
+            </button>
+          </div>
+          <div style="overflow-x:auto"><table><thead><tr><th>Bin ID</th><th>Location</th><th>Type</th><th>Fill Level</th><th>Status</th><th>Outcome</th></tr></thead><tbody id="dash-tbody"></tbody></table></div>
+        </div>
+      </div>
+
+      <!-- BINS -->
+      <div class="page" id="page-bins">
+        <div class="phdr">
+          <div class="phdr-text"><h2>Bins Management</h2><p>Add, delete and monitor all smart recycling bins</p></div>
+          <button class="btn btn-p" onclick="openAdd()">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+            Add New Bin
+          </button>
+        </div>
+        <div class="bst-row" id="bst-row"></div>
+        <div class="tbl-card">
+          <div class="tbl-hdr">
+            <div class="tbl-title">All Bins</div>
+            <div class="sw">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+              <input class="fc sinput" style="width:190px" placeholder="Search bins..." oninput="filterBins(this.value)" id="bsearch">
+            </div>
+          </div>
+          <div style="overflow-x:auto"><table id="bins-tbl"></table></div>
+        </div>
+      </div>
+
+      <!-- MAP -->
+      <div class="page" id="page-map">
+        <div class="phdr"><div class="phdr-text"><h2>Bin Map</h2><p>Interactive map showing all bin locations and fill status</p></div></div>
+        <div class="map-container">
+          <div class="sec-hdr">
+            <div class="sec-title">Live Bin Locations</div>
+            <div class="leg-row">
+              <div class="leg-item"><div class="leg-sq" style="background:#2D6A4F;border-radius:50%"></div><span>Wet Waste</span></div>
+              <div class="leg-item"><div class="leg-sq" style="background:#1565C0;border-radius:50%"></div><span>Dry Waste</span></div>
+            </div>
+          </div>
+          <div class="bin-map" id="bin-map"></div>
+        </div>
+        <div class="tbl-card">
+          <div class="tbl-hdr"><div class="tbl-title">Bin Location Details</div></div>
+          <div style="overflow-x:auto"><table id="map-tbl"></table></div>
+        </div>
+      </div>
+
+      <!-- DISPOSAL -->
+      <div class="page" id="page-disposal">
+        <div class="phdr">
+          <div class="phdr-text"><h2>Disposal Records</h2><p>Complete log of all waste disposal events</p></div>
+          <button class="btn btn-o btn-sm" onclick="loadRecords()">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="1 4 1 10 7 10"></polyline><path d="M3.51 15a9 9 0 1 0 .49-3.51"></path></svg>
+            Refresh
+          </button>
+        </div>
+        <div class="tbl-card"><div style="overflow-x:auto"><table id="disp-tbl"></table></div></div>
+      </div>
+
+      <!-- RECYCLING -->
+      <div class="page" id="page-recycling">
+        <div class="phdr"><div class="phdr-text"><h2>Recycling Outcomes</h2><p>Environmental impact and recycling pathways by waste type</p></div></div>
+        <div class="rec-grid">
+          <div class="rec-hero wet">
+            <div class="rec-bg"></div>
+            <div class="rec-pill"><span class="rec-pill-dot"></span>Organic / Biodegradable</div>
+            <h3>Wet Waste</h3>
+            <p>Food scraps, garden waste and biodegradable materials</p>
+            <div class="chips"><span class="chip">Compost</span><span class="chip">Organic Fertilizer</span><span class="chip">Biogas</span><span class="chip">Soil Enrichment</span></div>
+          </div>
+          <div class="rec-hero dry">
+            <div class="rec-bg"></div>
+            <div class="rec-pill"><span class="rec-pill-dot"></span>Recyclable Materials</div>
+            <h3>Dry Waste</h3>
+            <p>Paper, plastic, metal, glass and other recyclables</p>
+            <div class="chips"><span class="chip">Recycled Paper</span><span class="chip">Brochures & Boards</span><span class="chip">Plastic Products</span><span class="chip">Metal Recovery</span></div>
+          </div>
+        </div>
+        <div class="chart-card" style="margin-bottom:14px">
+          <div class="sec-hdr">
+            <div class="sec-title">Monthly Recycling Output (kg)</div>
+            <div class="leg-row">
+              <div class="leg-item"><div class="leg-sq" style="background:#40916C"></div><span>Wet → Compost</span></div>
+              <div class="leg-item"><div class="leg-sq" style="background:#1976D2"></div><span>Dry → Recycled</span></div>
+            </div>
+          </div>
+          <div style="position:relative;width:100%;height:200px">
+            <canvas id="recChart" role="img" aria-label="Monthly recycling output bar chart for wet and dry waste">Monthly recycling output</canvas>
+          </div>
+        </div>
+        <div class="ben-grid" id="ben-grid"></div>
+      </div>
+
+      <!-- ALERTS -->
+      <div class="page" id="page-alerts">
+        <div class="phdr">
+          <div class="phdr-text"><h2>Alerts & Warnings</h2><p>Real-time bin fill level alerts and system notifications</p></div>
+          <div style="display:flex;gap:7px">
+            <button class="btn btn-o btn-sm" onclick="renderAlerts()">
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="1 4 1 10 7 10"></polyline><path d="M3.51 15a9 9 0 1 0 .49-3.51"></path></svg>
+              Refresh
+            </button>
+            <button class="btn btn-o btn-sm" onclick="resolveAll()">Resolve All</button>
+          </div>
+        </div>
+        <div id="alerts-list"></div>
+      </div>
+
+      <!-- SCHEDULE -->
+      <div class="page" id="page-schedule">
+        <div class="phdr">
+          <div class="phdr-text"><h2>Collection Schedule</h2><p>Planned waste collection and bin maintenance calendar</p></div>
+          <button class="btn btn-p btn-sm" onclick="showToast('Schedule exported','ok')">Export</button>
+        </div>
+        <div class="sched-grid" id="sched-grid"></div>
+      </div>
+
+      <!-- REPORTS -->
+      <div class="page" id="page-reports">
+        <div class="phdr">
+          <div class="phdr-text"><h2>Reports & Insights</h2><p>Aggregated performance and sustainability metrics</p></div>
+          <button class="btn btn-p btn-sm" onclick="showToast('Report exported','ok')">Export Report</button>
+        </div>
+        <div class="kpi-grid" id="rep-kpis"></div>
+        <div class="rep-grid">
+          <div class="rep-card">
+            <div class="sec-hdr"><div class="sec-title">Most Active Bins</div></div>
+            <div style="position:relative;height:190px">
+              <canvas id="activeChart" role="img" aria-label="Horizontal bar chart showing most active bins by number of disposal events">Most active bins</canvas>
+            </div>
+          </div>
+          <div class="rep-card">
+            <div class="sec-hdr"><div class="sec-title">Type Distribution</div></div>
+            <div style="position:relative;height:190px">
+              <canvas id="typeChart" role="img" aria-label="Donut chart showing proportion of wet vs dry waste">Waste type distribution</canvas>
+            </div>
+          </div>
+        </div>
+        <div class="tbl-card">
+          <div class="tbl-hdr"><div class="tbl-title">Recycling Outcomes This Month</div></div>
+          <table id="out-tbl"></table>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- BIN MODAL -->
+<div class="modal-bg" id="bin-modal" style="display:none" onclick="if(event.target===this)closeModal()">
+  <div class="modal">
+    <div class="modal-hdr">
+      <div class="modal-t" id="m-title">Add New Bin</div>
+      <button class="modal-x" onclick="closeModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="fgrid">
+        <div class="fg"><label class="fl">Bin ID</label><input class="fc" id="f-id" placeholder="e.g. BIN-009"/></div>
+        <div class="fg"><label class="fl">Location</label><input class="fc" id="f-loc" placeholder="e.g. Main Street"/></div>
+      </div>
+      <div class="fgrid">
+        <div class="fg"><label class="fl">Waste Type</label><select class="fc" id="f-type"><option value="1">Wet Waste</option><option value="2">Dry Waste</option></select></div>
+        <div class="fg"><label class="fl">Capacity (kg)</label><input class="fc" id="f-cap" type="number" placeholder="50"/></div>
+      </div>
+      <div class="fgrid">
+        <div class="fg"><label class="fl">Fill Level (%)</label><input class="fc" id="f-fill" type="number" min="0" max="100" placeholder="0–100"/></div>
+        <div class="fg"><label class="fl">Status</label><select class="fc" id="f-status"><option>Low</option><option>Medium</option><option>Full</option></select></div>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-o" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-p" onclick="saveBin()">Save Bin</button>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script>
+// ═══════════════════════════════════════════════
+// CONFIG — change this to your server address
+// ═══════════════════════════════════════════════
+const API_URL = "http://localhost:3000";
+
+// ═══════════════════════════════════════════════
+// DEMO DATA (used when API is offline)
+// ═══════════════════════════════════════════════
+const db = {
+  bins: [
+    {id:'BIN-001',location:'Al-Nahda Park',  type:'Wet',capacity:60, fill:95, lat:22, lng:20},
+    {id:'BIN-002',location:'King Fahd Rd',   type:'Dry',capacity:80, fill:72, lat:50, lng:48},
+    {id:'BIN-003',location:'City Mall',      type:'Dry',capacity:100,fill:45, lat:30, lng:72},
+    {id:'BIN-004',location:'Green Market',   type:'Wet',capacity:50, fill:20, lat:72, lng:30},
+    {id:'BIN-005',location:'University',     type:'Wet',capacity:70, fill:88, lat:78, lng:62},
+    {id:'BIN-006',location:'Sports Complex', type:'Dry',capacity:90, fill:30, lat:18, lng:80},
+    {id:'BIN-007',location:'Central Plaza',  type:'Wet',capacity:60, fill:60, lat:50, lng:50},
+    {id:'BIN-008',location:'Corniche Ave',   type:'Dry',capacity:80, fill:92, lat:65, lng:18},
+  ],
+  disposals: [
+    {id:'D001',bin:'BIN-001',type:'Wet',time:'2025-04-28 08:14',weight:18.5},
+    {id:'D002',bin:'BIN-002',type:'Dry',time:'2025-04-28 09:30',weight:12.0},
+    {id:'D003',bin:'BIN-003',type:'Dry',time:'2025-04-28 11:00',weight:22.5},
+    {id:'D004',bin:'BIN-005',type:'Wet',time:'2025-04-29 07:45',weight:14.2},
+    {id:'D005',bin:'BIN-008',type:'Dry',time:'2025-04-29 10:10',weight:28.0},
+    {id:'D006',bin:'BIN-004',type:'Wet',time:'2025-04-29 13:20',weight:8.4},
+    {id:'D007',bin:'BIN-007',type:'Wet',time:'2025-04-30 08:00',weight:16.8},
+    {id:'D008',bin:'BIN-006',type:'Dry',time:'2025-04-30 09:55',weight:19.3},
+    {id:'D009',bin:'BIN-001',type:'Wet',time:'2025-04-30 11:30',weight:11.0},
+    {id:'D010',bin:'BIN-002',type:'Dry',time:'2025-04-30 14:15',weight:9.6},
+  ],
+  alerts: [
+    {id:'A1',bin:'BIN-001',msg:'Fill level critical (95%) — immediate collection required',sev:'crit',res:false,time:'2025-04-30 06:00'},
+    {id:'A2',bin:'BIN-005',msg:'Fill level high (88%) — schedule collection soon',sev:'crit',res:false,time:'2025-04-30 07:10'},
+    {id:'A3',bin:'BIN-008',msg:'Fill level critical (92%) — bin nearly full',sev:'crit',res:false,time:'2025-04-30 08:45'},
+    {id:'A4',bin:'BIN-002',msg:'Fill level approaching threshold (72%)',sev:'warn',res:true,time:'2025-04-29 15:00'},
+  ]
+};
+
+let isDark = false;
+const CH = {};
+
+// ═══════════════════════════════════════════════
+// HELPERS
+// ═══════════════════════════════════════════════
+function getStatus(f){ return f>=80?'Full':f>=50?'Medium':'Low'; }
+function rcFor(t){ return t==='Wet'?'Compost / Fertilizer':'Recycled Paper / Boards'; }
+function totalW(){ return db.disposals.reduce((s,d)=>s+d.weight,0); }
+function wetW(){   return db.disposals.filter(d=>d.type==='Wet').reduce((s,d)=>s+d.weight,0); }
+function dryW(){   return db.disposals.filter(d=>d.type==='Dry').reduce((s,d)=>s+d.weight,0); }
+function actAlerts(){ return db.alerts.filter(a=>!a.res).length; }
+function killChart(id){ if(CH[id]){ CH[id].destroy(); delete CH[id]; } }
+function fc(f){ return f>=80?'hi':f>=50?'md':'lo'; }
+
+function showToast(msg, type=''){
+  document.getElementById('tmsg').textContent = msg;
+  const t = document.getElementById('toast');
+  t.className = 'toast ' + type;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2600);
+}
+function updateBadge(){
+  const n = actAlerts(), b = document.getElementById('abadge');
+  b.textContent = n; b.style.display = n ? '' : 'none';
+}
+function setApiStatus(s){
+  const el=document.getElementById('api-pill'), dot=document.getElementById('api-dot'), txt=document.getElementById('api-txt');
+  el.className='api-pill '+s; dot.className='api-dot '+s;
+  txt.textContent = s==='ok' ? 'MySQL Connected' : s==='wait' ? 'Connecting...' : 'API Offline';
+}
+function toggleTheme(){
+  isDark = !isDark;
+  document.documentElement.setAttribute('data-theme', isDark ? 'dark' : '');
+}
+function toggleSidebar(){
+  document.getElementById('sidebar').classList.toggle('collapsed');
+}
+
+// Clock
+setInterval(()=>{
+  document.getElementById('clk').textContent = new Date().toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+}, 1000);
+document.getElementById('clk').textContent = new Date().toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+
+// ═══════════════════════════════════════════════
+// NAVIGATION
+// ═══════════════════════════════════════════════
+const PAGE_TITLES = {
+  dashboard:'Dashboard', bins:'Bins Management', map:'Bin Map',
+  disposal:'Disposal Records', recycling:'Recycling Outcomes',
+  alerts:'Alerts & Warnings', schedule:'Collection Schedule', reports:'Reports & Insights'
+};
+const PAGE_SUBS = {
+  dashboard:'Overview of all bins and recycling activity',
+  bins:'Add, delete and monitor smart bins',
+  map:'Interactive map of all bin locations',
+  disposal:'Full log of waste disposal events',
+  recycling:'Environmental pathways and outcomes',
+  alerts:'Real-time fill level alerts',
+  schedule:'Planned collection and maintenance calendar',
+  reports:'Aggregated insights and sustainability metrics'
+};
+const PAGE_RENDERS = {
+  dashboard:renderDash, bins:renderBins, map:renderMap,
+  disposal:renderDisposal, recycling:renderRecycling,
+  alerts:renderAlerts, schedule:renderSchedule, reports:renderReports
+};
+
+function goPage(page){
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('page-'+page).classList.add('active');
+  document.getElementById('t-title').textContent = PAGE_TITLES[page] || page;
+  document.getElementById('t-sub').textContent = PAGE_SUBS[page] || '';
+  document.querySelectorAll('.nav-item').forEach(b => {
+    if(b.getAttribute('onclick') && b.getAttribute('onclick').includes("'"+page+"'")) b.classList.add('active');
+  });
+  PAGE_RENDERS[page]?.();
+}
+
+// ═══════════════════════════════════════════════
+// API — Load from MySQL
+// ═══════════════════════════════════════════════
+async function initData(){
+  setApiStatus('wait');
+  try {
+    // GET /bins → SELECT * FROM bins
+    const bRes = await fetch(API_URL + '/bins');
+    const bRaw = await bRes.json();
+    db.bins = bRaw.map((b, i) => ({
+      id:       b.bin_id,
+      location: b.location,
+      type:     b.waste_type_id == 1 ? 'Wet' : 'Dry',
+      capacity: b.capacity_kg,
+      fill:     b.fill_level,
+      status:   b.status || getStatus(b.fill_level),
+      lat:      20 + (i * 9) % 70,
+      lng:      15 + (i * 11) % 75
+    }));
+
+    // GET /records → SELECT * FROM disposalrecords
+    try {
+      const rRes = await fetch(API_URL + '/records');
+      const rRaw = await rRes.json();
+      db.disposals = rRaw.map(r => ({
+        id:     r.record_id || r.id,
+        bin:    r.bin_id,
+        type:   r.waste_type_id == 1 ? 'Wet' : 'Dry',
+        time:   r.disposal_time || r.created_at || '',
+        weight: parseFloat(r.weight_kg || 0)
+      }));
+    } catch(e) { /* keep demo disposals */ }
+
+    // GET /alerts → SELECT * FROM alerts
+    try {
+      const aRes = await fetch(API_URL + '/alerts');
+      const aRaw = await aRes.json();
+      db.alerts = aRaw.map(a => ({
+        id:  a.alert_id || a.id,
+        bin: a.bin_id,
+        msg: a.message || 'Alert',
+        sev: (a.severity || 'warn').toLowerCase(),
+        res: a.status === 'resolved',
+        time:a.created_at || ''
+      }));
+    } catch(e) { /* keep demo alerts */ }
+
+    setApiStatus('ok');
+    showToast('Connected to MySQL database', 'ok');
+  } catch(err) {
+    console.error('API Error:', err);
+    setApiStatus('err');
+    showToast('API offline — showing demo data', 'err');
+  }
+
+  // Auto-generate alerts for full bins
+  db.bins.filter(b => b.fill >= 80).forEach(b => {
+    if(!db.alerts.find(a => a.bin === b.id && !a.res)) {
+      db.alerts.push({
+        id: 'auto-' + b.id,
+        bin: b.id,
+        msg: `Fill level ${b.fill >= 90 ? 'critical' : 'high'} (${b.fill}%)`,
+        sev: b.fill >= 90 ? 'crit' : 'warn',
+        res: false,
+        time: new Date().toLocaleString()
+      });
+    }
+  });
+
+  updateBadge();
+  updateEcoScore();
+  renderDash();
+}
+
+async function loadRecords(){
+  try {
+    const res = await fetch(API_URL + '/records');
+    db.disposals = (await res.json()).map(r => ({
+      id: r.record_id || r.id, bin: r.bin_id,
+      type: r.waste_type_id == 1 ? 'Wet' : 'Dry',
+      time: r.disposal_time || '', weight: parseFloat(r.weight_kg || 0)
+    }));
+    renderDisposal(); showToast('Records refreshed', 'ok');
+  } catch(e) { renderDisposal(); }
+}
+
+function updateEcoScore(){
+  const total = db.bins.reduce((s,b) => s + b.capacity, 0) || 1;
+  const used  = db.bins.reduce((s,b) => s + (b.fill/100*b.capacity), 0);
+  const rate  = Math.min(100, Math.round((1 - used/total) * 100));
+  document.getElementById('eco-fill').style.width = rate + '%';
+  document.getElementById('eco-val').textContent = rate + '% capacity available';
+}
+
+// ═══════════════════════════════════════════════
+// DASHBOARD
+// ═══════════════════════════════════════════════
+function renderDash(){
+  const t=totalW(), w=wetW(), d=dryW(), rec=(t*0.68).toFixed(1);
+  const full = db.bins.filter(b => b.fill >= 80).length;
+
+  document.getElementById('kpi-grid').innerHTML = [
+    {l:'Total Bins',     v:db.bins.length, ic:'BIN', cl:'g', tr:'nt', tv:'From database'},
+    {l:'Full Bins',      v:full,            ic:'ALT', cl:'r', tr:full>0?'dn':'up', tv:full>0?'Needs attention':'All OK'},
+    {l:'Total Collected',v:t.toFixed(1)+' kg', ic:'KG', cl:'b', tr:'up', tv:'All records'},
+    {l:'Total Recycled', v:rec+' kg',       ic:'REC', cl:'g', tr:'up', tv:'68% rate'},
+  ].map(k => `<div class="kpi-card">
+    <div class="kpi-accent ${k.cl}"></div>
+    <div style="padding-left:4px">
+      <div class="kpi-hdr">
+        <div class="kpi-box ${k.cl}">${k.ic}</div>
+        <span class="kpi-badge ${k.tr}">${k.tv}</span>
+      </div>
+      <div class="kpi-val">${k.v}</div>
+      <div class="kpi-lbl">${k.l}</div>
+    </div>
+  </div>`).join('');
+
+  // Donut chart
+  killChart('pieChart');
+  const wp = Math.round(w / (t||1) * 100);
+  CH['pieChart'] = new Chart(document.getElementById('pieChart').getContext('2d'), {
+    type: 'doughnut',
+    data: { labels:['Wet','Dry'], datasets:[{ data:[w||1,d||1], backgroundColor:['#40916C','#1976D2'], borderWidth:0, hoverOffset:4 }] },
+    options: { responsive:true, maintainAspectRatio:false, plugins:{ legend:{display:false} }, cutout:'70%' }
+  });
+  document.getElementById('donut-stats').innerHTML = `
+    <div class="ds-row"><div class="ds-val" style="color:#40916C">${w.toFixed(1)} kg</div><div class="ds-lbl">Wet</div></div>
+    <div class="ds-row"><div class="ds-val" style="color:#1976D2">${d.toFixed(1)} kg</div><div class="ds-lbl">Dry</div></div>
+    <div class="ds-row"><div class="ds-val">${t.toFixed(1)} kg</div><div class="ds-lbl">Total</div></div>`;
+  document.getElementById('pie-leg').innerHTML = `
+    <div class="leg-item"><div class="leg-sq" style="background:#40916C"></div><span>Wet ${wp}%</span></div>
+    <div class="leg-item"><div class="leg-sq" style="background:#1976D2"></div><span>Dry ${100-wp}%</span></div>`;
+
+  // Bar chart
+  killChart('barChart');
+  CH['barChart'] = new Chart(document.getElementById('barChart').getContext('2d'), {
+    type: 'bar',
+    data: {
+      labels: ['Wk1','Wk2','Wk3','Wk4','Wk5','Wk6','Wk7'],
+      datasets: [
+        { label:'Wet', data:[42,55,38,67,48,72,60], backgroundColor:'rgba(64,145,108,0.85)', borderRadius:4, borderSkipped:false },
+        { label:'Dry', data:[31,44,52,38,55,48,71], backgroundColor:'rgba(25,118,210,0.75)', borderRadius:4, borderSkipped:false }
+      ]
+    },
+    options: { responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}}, scales:{ x:{grid:{display:false},ticks:{font:{size:11}}}, y:{grid:{color:'rgba(128,128,128,0.08)'},ticks:{font:{size:11}}} }, barPercentage:0.65 }
+  });
+
+  // Status table
+  document.getElementById('dash-tbody').innerHTML = db.bins.map(b => {
+    const s = getStatus(b.fill);
+    return `<tr>
+      <td style="font-weight:600;font-size:12px">${b.id}</td>
+      <td>${b.location}</td>
+      <td><span class="bdg ${b.type.toLowerCase()}">${b.type}</span></td>
+      <td><div class="fw"><div class="fbar"><div class="fin ${fc(b.fill)}" style="width:${b.fill}%"></div></div><span class="fpct">${b.fill}%</span></div></td>
+      <td><span class="bdg ${s.toLowerCase()}">${s}</span></td>
+      <td style="font-size:11px;color:var(--tx2)">${rcFor(b.type)}</td>
+    </tr>`;
+  }).join('');
+}
+
+// ═══════════════════════════════════════════════
+// BINS MANAGEMENT — CRUD with real API
+// ═══════════════════════════════════════════════
+function renderBins(filter=''){
+  const fil = filter ? db.bins.filter(b =>
+    b.id.toLowerCase().includes(filter.toLowerCase()) ||
+    b.location.toLowerCase().includes(filter.toLowerCase())
+  ) : db.bins;
+  const wet = db.bins.filter(b => b.type==='Wet').length;
+  const dry = db.bins.filter(b => b.type==='Dry').length;
+
+  document.getElementById('bst-row').innerHTML = [
+    {dot:'#40916C', v:db.bins.length, l:'Total Bins'},
+    {dot:'#40916C', v:wet,            l:'Wet Bins'},
+    {dot:'#1976D2', v:dry,            l:'Dry Bins'},
+  ].map(s => `<div class="bst-card">
+    <div class="bst-dot" style="background:${s.dot}"></div>
+    <div><div class="bst-v">${s.v}</div><div class="bst-l">${s.l}</div></div>
+  </div>`).join('');
+
+  document.getElementById('bins-tbl').innerHTML = `
+  <thead><tr><th>Bin ID</th><th>Location</th><th>Type</th><th>Capacity</th><th>Fill</th><th>Status</th><th>Actions</th></tr></thead>
+  <tbody>${fil.length ? fil.map(b => {
+    const s = getStatus(b.fill);
+    return `<tr>
+      <td style="font-weight:600;font-size:12px">${b.id}</td>
+      <td>${b.location}</td>
+      <td><span class="bdg ${b.type.toLowerCase()}">${b.type}</span></td>
+      <td>${b.capacity} kg</td>
+      <td><div class="fw"><div class="fbar"><div class="fin ${fc(b.fill)}" style="width:${b.fill}%"></div></div><span class="fpct">${b.fill}%</span></div></td>
+      <td><span class="bdg ${s.toLowerCase()}">${s}</span></td>
+      <td><div class="acell"><button class="btn btn-d btn-sm" onclick="deleteBin('${b.id}')">Delete</button></div></td>
+    </tr>`;
+  }).join('') : '<tr><td colspan="7" style="text-align:center;padding:28px;color:var(--tx3)">No bins found</td></tr>'}</tbody>`;
+}
+function filterBins(v){ renderBins(v); }
+
+function openAdd(){
+  document.getElementById('m-title').textContent = 'Add New Bin';
+  ['f-id','f-loc','f-cap','f-fill'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('f-id').disabled = false;
+  document.getElementById('f-type').value = '1';
+  document.getElementById('f-status').value = 'Low';
+  document.getElementById('bin-modal').style.display = 'flex';
+}
+function closeModal(){ document.getElementById('bin-modal').style.display = 'none'; }
+
+async function saveBin(){
+  const bin_id       = document.getElementById('f-id').value.trim();
+  const location     = document.getElementById('f-loc').value.trim();
+  const waste_type_id= parseInt(document.getElementById('f-type').value);
+  const capacity_kg  = parseInt(document.getElementById('f-cap').value) || 50;
+  const fill_level   = Math.min(100, Math.max(0, parseInt(document.getElementById('f-fill').value) || 0));
+  const status       = document.getElementById('f-status').value;
+  if(!bin_id || !location){ showToast('Fill in all required fields','err'); return; }
+  try {
+    // POST /bins → INSERT INTO Bins
+    const response = await fetch(API_URL + '/bins', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ bin_id, location, waste_type_id, capacity_kg, fill_level, status })
+    });
+    const data = await response.json();
+    console.log(data);
+    showToast('Bin saved to database', 'ok');
+  } catch(e) {
+    db.bins.push({
+      id:       bin_id,
+      location,
+      type:     waste_type_id === 1 ? 'Wet' : 'Dry',
+      capacity: capacity_kg,
+      fill:     fill_level,
+      status,
+      lat:      50,
+      lng:      50
+    });
+    showToast('Saved locally (API offline)', 'ok');
+  }
+  closeModal();
+  renderBins(document.getElementById('bsearch').value);
+}
+
+async function deleteBin(id){
+  if(!confirm('Delete bin ' + id + ' from the database?')) return;
+  try {
+    // DELETE /bins/:id → DELETE FROM Bins WHERE bin_id = ?
+    const response = await fetch(API_URL + '/bins/' + id, { method: 'DELETE' });
+    const data = await response.json();
+    console.log(data);
+    showToast('Deleted from database', 'ok');
+  } catch(e) {
+    showToast('Deleted locally (API offline)', 'ok');
+  }
+  db.bins = db.bins.filter(b => b.id !== id);
+  renderBins();
+}
+
+// ═══════════════════════════════════════════════
+// MAP PAGE — interactive pin map
+// ═══════════════════════════════════════════════
+function renderMap(){
+  const map = document.getElementById('bin-map');
+  map.innerHTML = '';
+
+  // Draw roads
+  [[{top:'28%',height:'7px'},{top:'58%',height:'7px'}]].forEach(roads => {
+    roads.forEach(r => {
+      const d = document.createElement('div');
+      d.className = 'map-road-h';
+      Object.assign(d.style, r); map.appendChild(d);
+    });
+  });
+  [{left:'24%',width:'7px'},{left:'65%',width:'7px'}].forEach(r => {
+    const d = document.createElement('div');
+    d.className = 'map-road-v';
+    Object.assign(d.style, r); map.appendChild(d);
+  });
+
+  // Draw bin pins
+  db.bins.forEach(b => {
+    const col = b.type === 'Wet' ? '#2D6A4F' : '#1565C0';
+    const pin = document.createElement('div');
+    pin.className = 'bin-pin';
+    pin.style.cssText = `left:${b.lng}%;top:${b.lat}%`;
+    pin.innerHTML = `
+      <div class="pin-tooltip">${b.id} — ${b.fill}% full</div>
+      <div class="pin-body" style="background:${col}"><div class="pin-inner"></div></div>
+      <div class="pin-shadow"></div>`;
+    pin.onclick = () => showToast(`${b.id}: ${b.location} — ${b.fill}% (${b.type})`, 'ok');
+    map.appendChild(pin);
+  });
+
+  // Location table
+  document.getElementById('map-tbl').innerHTML = `
+  <thead><tr><th>Bin ID</th><th>Location</th><th>Type</th><th>Fill Level</th><th>Status</th></tr></thead>
+  <tbody>${db.bins.map(b => {
+    const s = getStatus(b.fill);
+    return `<tr>
+      <td style="font-weight:600;font-size:12px">${b.id}</td>
+      <td>${b.location}</td>
+      <td><span class="bdg ${b.type.toLowerCase()}">${b.type}</span></td>
+      <td><div class="fw"><div class="fbar"><div class="fin ${fc(b.fill)}" style="width:${b.fill}%"></div></div><span class="fpct">${b.fill}%</span></div></td>
+      <td><span class="bdg ${s.toLowerCase()}">${s}</span></td>
+    </tr>`;
+  }).join('')}</tbody>`;
+}
+
+// ═══════════════════════════════════════════════
+// DISPOSAL — GET /records
+// ═══════════════════════════════════════════════
+function renderDisposal(){
+  document.getElementById('disp-tbl').innerHTML = `
+  <thead><tr><th>Record ID</th><th>Bin</th><th>Type</th><th>Date & Time</th><th>Weight (kg)</th></tr></thead>
+  <tbody>${[...db.disposals].reverse().map(d => `<tr>
+    <td style="font-weight:600;font-size:12px">${d.id}</td>
+    <td>${d.bin}</td>
+    <td style="color:${d.type==='Wet'?'var(--g2)':'var(--b2)'};font-weight:500">${d.type} Waste</td>
+    <td style="color:var(--tx3)">${d.time}</td>
+    <td style="font-weight:500">${d.weight} kg</td>
+  </tr>`).join('')}</tbody>`;
+}
+
+// ═══════════════════════════════════════════════
+// RECYCLING PAGE
+// ═══════════════════════════════════════════════
+function renderRecycling(){
+  killChart('recChart');
+  CH['recChart'] = new Chart(document.getElementById('recChart').getContext('2d'), {
+    type: 'bar',
+    data: {
+      labels: ['Oct','Nov','Dec','Jan','Feb','Mar','Apr'],
+      datasets: [
+        { label:'Wet→Compost', data:[45,60,52,70,58,80,68], backgroundColor:'rgba(64,145,108,0.85)', borderRadius:4, borderSkipped:false },
+        { label:'Dry→Recycled',data:[38,55,49,61,52,72,55], backgroundColor:'rgba(25,118,210,0.75)', borderRadius:4, borderSkipped:false }
+      ]
+    },
+    options:{ responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}}, scales:{ x:{grid:{display:false}}, y:{grid:{color:'rgba(128,128,128,0.08)'}} }, barPercentage:0.65 }
+  });
+  const t = totalW(), w = wetW(), d = dryW();
+  document.getElementById('ben-grid').innerHTML = [
+    {bg:'#D8F3DC',fg:'#1B4332',l:'CO₂ Saved',v:'2.4 t'},
+    {bg:'#D8F3DC',fg:'#1B4332',l:'Equivalent Trees',v:'18'},
+    {bg:'#DBEAFE',fg:'#1565C0',l:'Water Conserved',v:'12,400 L'},
+    {bg:'#FFF3E0',fg:'#BF360C',l:'Energy Recovered',v:'840 kWh'},
+    {bg:'#EDE7F6',fg:'#4A148C',l:'Total Recycled',v:(t*0.68).toFixed(1)+' kg'},
+    {bg:'#D8F3DC',fg:'#1B4332',l:'Recycling Rate',v:'68%'},
+  ].map(b => `<div class="ben-card">
+    <div class="ben-icon" style="background:${b.bg};color:${b.fg}">${b.l.split(' ').map(w=>w[0]).join('').slice(0,3)}</div>
+    <div class="ben-val">${b.v}</div>
+    <div class="ben-lbl">${b.l}</div>
+  </div>`).join('');
+}
+
+// ═══════════════════════════════════════════════
+// ALERTS — merged from DB + auto-generated
+// ═══════════════════════════════════════════════
+function renderAlerts(){
+  document.getElementById('alerts-list').innerHTML = db.alerts.length
+    ? db.alerts.map(a => `
+      <div class="alert-item ${a.sev==='crit'?'ci':'wi'}">
+        <div class="adot ${a.sev}"></div>
+        <div class="ac">
+          <div class="at">${a.bin} — ${a.msg}</div>
+          <div class="am">${a.time}</div>
+        </div>
+        ${a.res
+          ? `<span class="res-tag">Resolved</span>`
+          : `<button class="res-btn" onclick="resolveAlert('${a.id}')">Mark Resolved</button>`}
+      </div>`).join('')
+    : `<div style="text-align:center;padding:44px;color:var(--tx3)">
+        <div style="font-size:24px;font-weight:700;color:var(--g3);margin-bottom:8px">All Clear</div>
+        <div>All bins operating within normal levels</div>
+      </div>`;
+}
+function resolveAlert(id){
+  const a = db.alerts.find(x => x.id === id);
+  if(a){ a.res = true; updateBadge(); renderAlerts(); showToast('Alert resolved','ok'); }
+}
+function resolveAll(){
+  db.alerts.forEach(a => a.res = true);
+  updateBadge(); renderAlerts(); showToast('All alerts resolved','ok');
+}
+
+// ═══════════════════════════════════════════════
+// SCHEDULE PAGE
+// ═══════════════════════════════════════════════
+function renderSchedule(){
+  const days = [
+    {name:'Monday',   date:'Apr 28', items:[{bin:'BIN-001',loc:'Al-Nahda Park', type:'Wet',time:'08:00',s:'done'},{bin:'BIN-003',loc:'City Mall',    type:'Dry',time:'10:30',s:'done'}]},
+    {name:'Tuesday',  date:'Apr 29', items:[{bin:'BIN-005',loc:'University',    type:'Wet',time:'07:30',s:'done'},{bin:'BIN-008',loc:'Corniche Ave',  type:'Dry',time:'11:00',s:'done'}]},
+    {name:'Wednesday',date:'Apr 30', items:[{bin:'BIN-002',loc:'King Fahd Rd',  type:'Dry',time:'09:00',s:'pend'},{bin:'BIN-007',loc:'Central Plaza', type:'Wet',time:'13:00',s:'pend'}]},
+    {name:'Thursday', date:'May 1',  items:[{bin:'BIN-004',loc:'Green Market',  type:'Wet',time:'08:30',s:'sched'},{bin:'BIN-006',loc:'Sports Complex',type:'Dry',time:'12:00',s:'sched'}]},
+  ];
+  const sc = {done:'ss-done',pend:'ss-pend',sched:'ss-sched'};
+  const st = {done:'Completed',pend:'Pending',sched:'Scheduled'};
+  document.getElementById('sched-grid').innerHTML = days.map(d => `
+    <div class="sched-card">
+      <div class="sched-day-hdr">
+        <div class="sched-day-name">${d.name}</div>
+        <div class="sched-day-date">${d.date}</div>
+      </div>
+      <div class="sched-items">${d.items.map(it => `
+        <div class="sched-item">
+          <div class="sched-dot" style="background:${it.type==='Wet'?'#40916C':'#1976D2'}"></div>
+          <div><div class="si-title">${it.bin} — ${it.loc}</div><div class="si-sub">${it.time} · ${it.type}</div></div>
+          <span class="sched-status ${sc[it.s]}">${st[it.s]}</span>
+        </div>`).join('')}
+      </div>
+    </div>`).join('');
+}
+
+// ═══════════════════════════════════════════════
+// REPORTS PAGE
+// ═══════════════════════════════════════════════
+function renderReports(){
+  const t=totalW(), w=wetW(), d=dryW();
+  document.getElementById('rep-kpis').innerHTML = [
+    {l:'Total Records', v:db.disposals.length,    ic:'EVT',cl:'b',tr:'nt',tv:'All time'},
+    {l:'Total Waste',   v:t.toFixed(1)+' kg',     ic:'KG', cl:'b',tr:'up',tv:'All records'},
+    {l:'Recycled',      v:(t*0.68).toFixed(1)+' kg',ic:'REC',cl:'g',tr:'up',tv:'68% rate'},
+    {l:'Active Alerts', v:actAlerts(),             ic:'ALT',cl:'r',tr:actAlerts()>0?'dn':'up',tv:actAlerts()>0?'Check bins':'All clear'},
+  ].map(k => `<div class="kpi-card">
+    <div class="kpi-accent ${k.cl}"></div>
+    <div style="padding-left:4px">
+      <div class="kpi-hdr"><div class="kpi-box ${k.cl}">${k.ic}</div><span class="kpi-badge ${k.tr}">${k.tv}</span></div>
+      <div class="kpi-val">${k.v}</div>
+      <div class="kpi-lbl">${k.l}</div>
+    </div>
+  </div>`).join('');
+
+  killChart('activeChart');
+  const ba = db.bins.map(b=>({id:b.id,n:db.disposals.filter(d=>d.bin===b.id).length})).sort((a,b)=>b.n-a.n).slice(0,6);
+  CH['activeChart'] = new Chart(document.getElementById('activeChart').getContext('2d'), {
+    type:'bar',
+    data:{labels:ba.map(b=>b.id),datasets:[{data:ba.map(b=>b.n),backgroundColor:ba.map((_,i)=>i%2===0?'rgba(64,145,108,0.85)':'rgba(25,118,210,0.75)'),borderRadius:4,borderSkipped:false}]},
+    options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{grid:{color:'rgba(128,128,128,0.08)'},ticks:{stepSize:1}},y:{grid:{display:false}}}}
+  });
+
+  killChart('typeChart');
+  CH['typeChart'] = new Chart(document.getElementById('typeChart').getContext('2d'), {
+    type:'doughnut',
+    data:{labels:['Wet','Dry'],datasets:[{data:[w||1,d||1],backgroundColor:['#40916C','#1976D2'],borderWidth:0,hoverOffset:4}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},cutout:'62%'}
+  });
+
+  document.getElementById('out-tbl').innerHTML = `
+  <thead><tr><th>Outcome</th><th>Type</th><th>Quantity</th><th>Benefit</th></tr></thead>
+  <tbody>${[
+    {o:'Organic Compost',   type:'Wet',q:(w*0.60).toFixed(1)+' kg',b:'Soil enrichment'},
+    {o:'Organic Fertilizer',type:'Wet',q:(w*0.35).toFixed(1)+' kg',b:'Agricultural use'},
+    {o:'Recycled Paper',    type:'Dry',q:(d*0.50).toFixed(1)+' kg',b:'Paper products'},
+    {o:'Cardboard / Boards',type:'Dry',q:(d*0.30).toFixed(1)+' kg',b:'Packaging'},
+    {o:'Plastic Recovery',  type:'Dry',q:(d*0.15).toFixed(1)+' kg',b:'Industrial reuse'},
+  ].map(x => `<tr>
+    <td style="font-weight:500">${x.o}</td>
+    <td><span class="bdg ${x.type.toLowerCase()}">${x.type}</span></td>
+    <td style="font-weight:500">${x.q}</td>
+    <td style="color:var(--tx3)">${x.b}</td>
+  </tr>`).join('')}</tbody>`;
+}
+
+// ═══════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════
+window.onload = () => { initData(); };
+</script>
+</body>
+</html>
