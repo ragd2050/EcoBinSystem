@@ -54,30 +54,27 @@ app.get("/bins", (req, res) => {
 
   const sql = `
     SELECT
-      bin_id,
-      location,
-      capacity_kg,
-      fill_level,
-      status,
-      waste_type_id
-    FROM Bins
+      B.bin_id,
+      B.location,
+      B.capacity_kg,
+      B.fill_level,
+      B.status,
+      W.type_name
+    FROM Bins B
+    LEFT JOIN BinWasteTypes BW
+      ON B.bin_id = BW.bin_id
+    LEFT JOIN WasteTypes W
+      ON BW.waste_type_id = W.waste_type_id
+    ORDER BY B.bin_id
   `;
 
-  db.query(sql, (err, result) => {
-
+  db.query(sql, (err, results) => {
     if (err) {
-
-      console.log("MYSQL ERROR:", err);
-
-      return res.status(500).json({
-        fatal: true,
-        error: err.message
-      });
-
+      console.log(err);
+      res.status(500).json(err);
+    } else {
+      res.json(results);
     }
-
-    res.json(result);
-
   });
 
 });
