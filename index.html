@@ -1074,12 +1074,19 @@ function goPage(page){
 // API — Load from MySQL
 // ═══════════════════════════════════════════════
 async function initData(){
+
   setApiStatus('wait');
+
   try {
+
     // GET /bins → SELECT * FROM bins
     const bRes = await fetch(API_URL + '/bins');
+
     const bRaw = await bRes.json();
-    db.bins = bRaw.map((b, i) => ({
+
+    const binsData = bRaw.data || bRaw;
+
+    db.bins = binsData.map((b, i) => ({
       id:       b.bin_id,
       location: b.location,
       type:     b.waste_type_id == 1 ? 'Wet' : 'Dry',
@@ -1090,44 +1097,75 @@ async function initData(){
       lng:      15 + (i * 11) % 75
     }));
 
+
     // GET /records → SELECT * FROM disposalrecords
     try {
+
       const rRes = await fetch(API_URL + '/records');
+
       const rRaw = await rRes.json();
-      db.disposals = rRaw.map(r => ({
+
+      const recordsData = rRaw.data || rRaw;
+
+      db.disposals = recordsData.map(r => ({
         id:     r.record_id || r.id,
         bin:    r.bin_id,
         type:   r.waste_type_id == 1 ? 'Wet' : 'Dry',
         time:   r.disposal_time || r.created_at || '',
         weight: parseFloat(r.weight_kg || 0)
       }));
-    } catch(e) { /* keep demo disposals */ }
+
+    } catch(e) {
+
+      /* keep demo disposals */
+
+    }
+
 
     // GET /alerts → SELECT * FROM alerts
     try {
+
       const aRes = await fetch(API_URL + '/alerts');
+
       const aRaw = await aRes.json();
-      db.alerts = aRaw.map(a => ({
+
+      const alertsData = aRaw.data || aRaw;
+
+      db.alerts = alertsData.map(a => ({
         id:  a.alert_id || a.id,
         bin: a.bin_id,
         msg: a.message || 'Alert',
         sev: (a.severity || 'warn').toLowerCase(),
         res: a.status === 'resolved',
-        time:a.created_at || ''
+        time: a.created_at || ''
       }));
-    } catch(e) { /* keep demo alerts */ }
+
+    } catch(e) {
+
+      /* keep demo alerts */
+
+    }
 
     setApiStatus('ok');
+
     showToast('Connected to MySQL database', 'ok');
+
   } catch(err) {
+
     console.error('API Error:', err);
+
     setApiStatus('err');
+
     showToast('API offline — showing demo data', 'err');
+
   }
+
 
   // Auto-generate alerts for full bins
   db.bins.filter(b => b.fill >= 80).forEach(b => {
+
     if(!db.alerts.find(a => a.bin === b.id && !a.res)) {
+
       db.alerts.push({
         id: 'auto-' + b.id,
         bin: b.id,
@@ -1136,33 +1174,70 @@ async function initData(){
         res: false,
         time: new Date().toLocaleString()
       });
+
     }
+
   });
 
   updateBadge();
+
   updateEcoScore();
+
   renderDash();
 }
 
+
 async function loadRecords(){
+
   try {
+
     const res = await fetch(API_URL + '/records');
-    db.disposals = (await res.json()).map(r => ({
-      id: r.record_id || r.id, bin: r.bin_id,
+
+    const raw = await res.json();
+
+    const recordsData = raw.data || raw;
+
+    db.disposals = recordsData.map(r => ({
+      id: r.record_id || r.id,
+      bin: r.bin_id,
       type: r.waste_type_id == 1 ? 'Wet' : 'Dry',
-      time: r.disposal_time || '', weight: parseFloat(r.weight_kg || 0)
+      time: r.disposal_time || r.created_at || '',
+      weight: parseFloat(r.weight_kg || 0)
     }));
-    renderDisposal(); showToast('Records refreshed', 'ok');
-  } catch(e) { renderDisposal(); }
+
+    renderDisposal();
+
+    showToast('Records refreshed', 'ok');
+
+  } catch(e) {
+
+    renderDisposal();
+
+  }
+
 }
 
+
 function updateEcoScore(){
+
   const total = db.bins.reduce((s,b) => s + b.capacity, 0) || 1;
+
   const used  = db.bins.reduce((s,b) => s + (b.fill/100*b.capacity), 0);
-  const rate  = Math.min(100, Math.round((1 - used/total) * 100));
+
+  const rate = Math.min(
+    100,
+    Math.round((1 - used/total) * 100)
+  );
+
   document.getElementById('eco-fill').style.width = rate + '%';
-  document.getElementById('eco-val').textContent = rate + '% capacity available';
+
+  document.getElementById('eco-val').textContent =
+    rate + '% capacity available';
+
 }
+// ═══════════════════════════════════════════════
+// DASHBOARD
+// ═══════════════════════════════════════════════
 
 // ═══════════════════════════════════════════════
 // DASHBOARD
