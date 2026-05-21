@@ -14,12 +14,14 @@ app.use(cors());
 app.use(express.json());
 
 // 3) الاتصال بقاعدة البيانات
-const db = mysql.createConnection({
-  host:     "127.0.0.1",
-  user:     "root",
-  password: "200510",
-  database: "EcoBinDB",
-  port:     3307
+const db = mysql.createPool({
+  host: process.env.DB_HOST,
+  user: process.env.DB_USER,
+  password: process.env.DB_PASSWORD,
+  database: process.env.DB_NAME,
+  waitForConnections: true,
+  connectionLimit: 10,
+  queueLimit: 0
 });
 
 // اختبار الاتصال
