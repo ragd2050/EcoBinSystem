@@ -42,16 +42,36 @@ app.get("/test", (req, res) => {
 // API: GET /bins — جلب جميع الحاويات
 // ─────────────────────────────────────────
 app.get("/bins", (req, res) => {
-  db.query("SELECT * FROM Bins", (err, result) => {
-    if (err) {
-      console.log(err);
-      res.status(500).json(err);
-    } else {
-      res.json(result);
-    }
-  });
-});
 
+  const sql = `
+    SELECT
+      bin_id,
+      location,
+      capacity_kg,
+      fill_level,
+      status,
+      waste_type_id
+    FROM Bins
+  `;
+
+  db.query(sql, (err, result) => {
+
+    if (err) {
+
+      console.log("MYSQL ERROR:", err);
+
+      return res.status(500).json({
+        fatal: true,
+        error: err.message
+      });
+
+    }
+
+    res.json(result);
+
+  });
+
+});
 // ─────────────────────────────────────────
 // API: POST /bins — إضافة حاوية جديدة
 // ─────────────────────────────────────────
